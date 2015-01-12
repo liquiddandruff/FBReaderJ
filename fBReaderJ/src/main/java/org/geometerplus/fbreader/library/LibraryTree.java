@@ -19,8 +19,10 @@
 
 package org.geometerplus.fbreader.library;
 
+import android.view.ContextMenu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 import java.util.*;
 
@@ -64,7 +66,11 @@ public abstract class LibraryTree extends FBTree {
 	}
 
 	public boolean hasUniqueView() { return false; }
-	public View createUniqueView(View convertView, ViewGroup parent, LibraryTree tree, TreeActivity activity) { return null; }
+	public View onCreateUniqueView(View convertView, ViewGroup parent, LibraryTree tree, TreeActivity activity) { return null; }
+	// override and return true to handle callback and exit early, otherwise original menu elements will be added
+	public boolean onUniqueViewListItemClick(ListView listView, View view, int position, long rowId) { return false; }
+	public boolean onCreateUniqueViewContextMenu(ContextMenu menu) { return false; }
+	public boolean onUniqueViewContextItemSelected(int itemID) { return false; }
 
 	public Book getBook() {
 		return null;

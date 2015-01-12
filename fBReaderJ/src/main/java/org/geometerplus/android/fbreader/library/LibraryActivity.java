@@ -114,7 +114,11 @@ public class LibraryActivity extends TreeActivity<LibraryTree> implements MenuIt
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long rowId) {
 		final LibraryTree tree = (LibraryTree)getListAdapter().getItem(position);
-		final Book book = tree.getBook();
+		final LibraryTree libraryTree = ((LibraryTree)getListAdapter().getItem(position));
+		if(libraryTree.hasUniqueView() && libraryTree.onUniqueViewListItemClick(listView, view , position, rowId)) {
+			return;
+		}
+		final Book book = libraryTree.getBook();
 		if (book != null) {
 			showBookInfo(book);
 		} else {
@@ -177,7 +181,11 @@ public class LibraryActivity extends TreeActivity<LibraryTree> implements MenuIt
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenu.ContextMenuInfo menuInfo) {
 		final int position = ((AdapterView.AdapterContextMenuInfo)menuInfo).position;
-		final Book book = ((LibraryTree)getListAdapter().getItem(position)).getBook();
+		final LibraryTree libraryTree = ((LibraryTree)getListAdapter().getItem(position));
+		if(libraryTree.hasUniqueView() && libraryTree.onCreateUniqueViewContextMenu(menu)) {
+			return;
+		}
+		final Book book = libraryTree.getBook();
 		if (book != null) {
 			createBookContextMenu(menu, book);
 		}
@@ -216,7 +224,11 @@ public class LibraryActivity extends TreeActivity<LibraryTree> implements MenuIt
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		final int position = ((AdapterView.AdapterContextMenuInfo)item.getMenuInfo()).position;
-		final Book book = ((LibraryTree)getListAdapter().getItem(position)).getBook();
+		final LibraryTree libraryTree = ((LibraryTree)getListAdapter().getItem(position));
+		if(libraryTree.hasUniqueView() && libraryTree.onUniqueViewContextItemSelected(item.getItemId())) {
+			return true;
+		}
+		final Book book = libraryTree.getBook();
 		if (book != null) {
 			return onContextItemSelected(item.getItemId(), book);
 		}
