@@ -463,26 +463,25 @@ public final class FBReaderApp extends ZLApplication {
 
 		public void run() {
 			Collection.storePosition(myBook.getId(), myPosition);
-			Log.d("check5", "PositionSaver.run");
 			myBook.setProgress(myProgress);
+			Log.d("check5", "PositionSaver.run: " + myProgress.Numerator + "/" + myProgress.Denominator);
 			Collection.saveBook(myBook);
 		}
 	}
 
 	private class StatisticsSaver implements Runnable {
-		private final Book myBook;
+		private final Book currentBook;
 
 		StatisticsSaver(Book book) {
-			myBook = book;
+			currentBook = book;
 		}
 
 		public void run() {
-			BookStatistics bookStatistics = myBook.getStatistics();
-			Collection.saveBookStatistics(bookStatistics);
-			Log.d("check5", "StatisticsSaver.run");
-			myBook.setStatistics(bookStatistics);
-			// TODO: save books only once; books are saved twice (position saver)
-			Collection.saveBook(myBook);
+			Log.d("check5", "StatisticsSaver.run stats,book.stats:\n" + currentBook.getStatistics());
+			//Collection.saveBookStatistics(currentBook.getStatistics());
+			//currentBook.setStatistics(currentBook.getStatistics());
+			// statistics already set
+			Collection.saveBook(currentBook);
 		}
 	}
 
@@ -571,7 +570,7 @@ public final class FBReaderApp extends ZLApplication {
 
 	public void storeStatistics() {
 		final Book book = Model != null ? Model.Book : null;
-		if (book != null && BookTextView != null) {
+		if (book != null) {
 			saveStatistics();
 		}
 	}

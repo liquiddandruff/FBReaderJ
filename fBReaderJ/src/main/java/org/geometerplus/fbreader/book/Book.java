@@ -150,8 +150,7 @@ public class Book extends TitledEntity {
 			myUids = book.myUids != null ? new ArrayList<UID>(book.myUids) : null;
 			myIsSaved = false;
 		}
-		Log.d("check5", "updateFrom - stats: " + (book.myStatistics == null ? "0" : "1") +
-			" progress: " + (book.myProgress == null ? "0" : "1"));
+		Log.d("check5", "updateFrom - stats: " + (book.myStatistics == null ? "0" : book));
 		setStatistics(book.myStatistics);
 		setProgress(book.myProgress);
 		if (HasBookmark != book.HasBookmark) {
@@ -473,7 +472,7 @@ public class Book extends TitledEntity {
 	}
 
 	public void setStatistics(BookStatistics bookStatistics) {
-		Log.d("check5", "setStatistics - bookStatistics: " + (bookStatistics == null ? "0" : "1"));
+		Log.d("check5", "setStatistics - bookStatistics: statsSet");
 		if(bookStatistics != null) {
 			myStatistics = bookStatistics;
 			myIsSaved = false;
@@ -492,7 +491,6 @@ public class Book extends TitledEntity {
 	}
 
 	public void setProgress(RationalNumber progress) {
-		Log.d("check5", "setProgress - progress: " + (progress == null ? "0" : "1"));
 		if (!MiscUtil.equals(myProgress, progress)) {
 			myProgress = progress;
 			myIsSaved = false;
@@ -500,7 +498,6 @@ public class Book extends TitledEntity {
 	}
 
 	public void setProgressWithNoCheck(RationalNumber progress) {
-		Log.d("check5", "setProgressWithNoCheck - progress: " + (progress == null ? "0" : "1"));
 		myProgress = progress;
 	}
 
