@@ -200,7 +200,7 @@ public class StatisticsTree extends LibraryTree {
 				}
 				averageSessionDurationSeconds /= booksReading.size() < 1 ? 1 : booksReading.size();
 				// order matters for this calculation; careful
-				averagePagesPerSession = averagePagesPerHour / averagePagesPerSession;
+				averagePagesPerSession = averagePagesPerHour / (averagePagesPerSession == 0 ? 1 : averagePagesPerSession);
 				final int hours = averageBookTimeSpent / (1000 * 60 * 60);
 				averagePagesPerHour /= hours < 1 ? 1 : hours;
 				averageBookTimeSpent /= booksReading.size() < 1 ? 1 : booksReading.size();
