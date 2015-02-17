@@ -76,4 +76,7 @@ interface LibraryInterface {
 
 	List<String> formats();
 	boolean setActiveFormats(in List<String> formats);
+
+	boolean exportBookmarks(in String dir, in String query);
+	boolean importBookmarks(in String dir);
 }

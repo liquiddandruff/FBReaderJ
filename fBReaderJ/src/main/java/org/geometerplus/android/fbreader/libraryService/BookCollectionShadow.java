@@ -483,6 +483,26 @@ public class BookCollectionShadow extends AbstractBookCollection implements Serv
 		}
 	}
 
+	public synchronized boolean exportBookmarks(String dir, BookmarkQuery query) {
+		if (myInterface != null) {
+			try {
+				return myInterface.exportBookmarks(dir, SerializerUtil.serialize(query));
+			} catch (RemoteException e) {
+			}
+		}
+		return false;
+	}
+
+	public synchronized boolean importBookmarks(String dir) {
+		if (myInterface != null) {
+			try {
+				return myInterface.importBookmarks(dir);
+			} catch (RemoteException e) {
+			}
+		}
+		return false;
+	}
+
 	public synchronized HighlightingStyle getHighlightingStyle(int styleId) {
 		if (myInterface == null) {
 			return null;

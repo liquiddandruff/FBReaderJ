@@ -95,6 +95,8 @@ public interface IBookCollection {
 	List<Bookmark> bookmarks(BookmarkQuery query);
 	void saveBookmark(Bookmark bookmark);
 	void deleteBookmark(Bookmark bookmark);
+	boolean exportBookmarks(String dir, BookmarkQuery query);
+	boolean importBookmarks(String dir);
 
 	HighlightingStyle getHighlightingStyle(int styleId);
 	List<HighlightingStyle> highlightingStyles();

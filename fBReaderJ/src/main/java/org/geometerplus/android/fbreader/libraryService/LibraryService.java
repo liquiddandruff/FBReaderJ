@@ -402,6 +402,14 @@ public class LibraryService extends Service {
 			myCollection.deleteBookmark(SerializerUtil.deserializeBookmark(serialized));
 		}
 
+		public boolean exportBookmarks(String dir, String query) {
+			return myCollection.exportBookmarks(dir, SerializerUtil.deserializeBookmarkQuery(query));
+		}
+
+		public boolean importBookmarks(String dir) {
+			return myCollection.importBookmarks(dir);
+		}
+
 		public String getHighlightingStyle(int styleId) {
 			return SerializerUtil.serialize(myCollection.getHighlightingStyle(styleId));
 		}

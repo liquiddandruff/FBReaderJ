@@ -742,6 +742,14 @@ public class BookCollection extends AbstractBookCollection {
 		}
 	}
 
+	public boolean exportBookmarks(String dir, BookmarkQuery query) {
+		return myDatabase.exportBookmarks(dir, query);
+	}
+
+	public boolean importBookmarks(String dir) {
+		return myDatabase.importBookmarks(dir);
+	}
+
 	public ZLTextFixedPosition.WithTimestamp getStoredPosition(long bookId) {
 		return myDatabase.getStoredPosition(bookId);
 	}
