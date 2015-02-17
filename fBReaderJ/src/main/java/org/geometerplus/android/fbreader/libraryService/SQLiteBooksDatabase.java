@@ -19,11 +19,13 @@
 
 package org.geometerplus.android.fbreader.libraryService;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.*;
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
@@ -33,7 +35,6 @@ import android.database.sqlite.*;
 import android.database.SQLException;
 import android.database.Cursor;
 import android.os.Environment;
-import android.util.Log;
 
 import org.geometerplus.zlibrary.core.options.Config;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -55,8 +56,8 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	SQLiteBooksDatabase(Context context) {
 		myDatabase = context.openOrCreateDatabase("books.db", Context.MODE_PRIVATE, null);
 		migrate();
-		//exportBookmarks("FBReader.bookmarks");
-		importBookmarks("FBReader.bookmarks");
+		//exportBookmarks("FBReader.bookmarks.xml");
+		importBookmarks("FBReader.bookmarks.xml");
 	}
 
 	@Override
@@ -973,7 +974,7 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	protected boolean exportBookmarks(String dir) {
 		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
 		try {
-			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(sdDir));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir),"utf-8"));
 			StringBuilder sb = new StringBuilder();
 			for (BookmarkQuery query = new BookmarkQuery(20); ; query = query.next()) {
 				final List<Bookmark> bookmarks = loadBookmarks(query);
@@ -984,8 +985,8 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 					sb.append(bm + "\n\n");
 				}
 			}
-			oos.writeObject(sb.toString());
-			oos.close();
+			writer.write(sb.toString());
+			writer.close();
 			return true;
 		} catch (Exception e) {
 		}
@@ -996,16 +997,19 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	protected boolean importBookmarks(String dir) {
 		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
 		try {
-			ObjectInputStream oos = new ObjectInputStream(new FileInputStream(sdDir));
-			String serialized = (String) oos.readObject();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir),"utf-8"));
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while((line = reader.readLine()) != null) {
+				sb.append(line);
+			}
 			String token = "<?xml version='1.1' encoding='UTF-8'?>";
-			List<String> serializedList = Arrays.asList(serialized.split(Pattern.quote(token)));
+			List<String> serializedList = Arrays.asList(sb.toString().split(Pattern.quote(token)));
 			for(String xml : serializedList) {
-				if(xml.length() <= 10)
-					continue;
+				if(xml.length() <= 10) continue;
 				saveBookmark(SerializerUtil.deserializeBookmark(token + xml), true);
 			}
-			oos.close();
+			reader.close();
 			return true;
 		} catch (Exception e) {
 		}
