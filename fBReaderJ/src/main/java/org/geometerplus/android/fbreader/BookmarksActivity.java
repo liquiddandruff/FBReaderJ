@@ -350,6 +350,8 @@ public class BookmarksActivity extends TabActivity implements MenuItem.OnMenuIte
 			final ImageView imageView = ViewUtil.findImageView(view, R.id.bookmark_item_icon);
 			final TextView textView = ViewUtil.findTextView(view, R.id.bookmark_item_text);
 			final TextView bookTitleView = ViewUtil.findTextView(view, R.id.bookmark_item_booktitle);
+			final TextView exportView = ViewUtil.findTextView(view, R.id.bookmark_export);
+			final TextView importView = ViewUtil.findTextView(view, R.id.bookmark_import);
 
 			final Bookmark bookmark = getItem(position);
 			if (bookmark == null) {
@@ -357,7 +359,13 @@ public class BookmarksActivity extends TabActivity implements MenuItem.OnMenuIte
 				imageView.setImageResource(R.drawable.ic_list_plus);
 				textView.setText(myResource.getResource("new").getValue());
 				bookTitleView.setVisibility(View.GONE);
+				exportView.setText("Export");
+				exportView.setVisibility(View.VISIBLE);
+				importView.setText("Import");
+				importView.setVisibility(View.VISIBLE);
 			} else {
+				exportView.setVisibility(View.GONE);
+				importView.setVisibility(View.GONE);
 				imageView.setVisibility(View.GONE);
 				textView.setText(bookmark.getText());
 				if (myShowAddBookmarkItem) {
@@ -399,6 +407,15 @@ public class BookmarksActivity extends TabActivity implements MenuItem.OnMenuIte
 		}
 
 		public final void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			// use listener
+			if (view.findViewById(R.id.bookmark_export).getVisibility() == View.VISIBLE) {
+				String out =  "FBReader." + myBook.getTitle() + ".xml";
+				if(myCollection.exportBookmarks(out, new BookmarkQuery(myBook, 20)))
+					Toast.makeText(getBaseContext(), "Bookmarks of current book exported to " + out, Toast.LENGTH_LONG).show();
+				else
+					Toast.makeText(getBaseContext(), "Failed to export bookmarks", Toast.LENGTH_LONG).show();
+				return;
+			}
 			final Bookmark bookmark = getItem(position);
 			if (bookmark != null) {
 				gotoBookmark(bookmark);
