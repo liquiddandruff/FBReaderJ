@@ -19,13 +19,21 @@
 
 package org.geometerplus.android.fbreader.libraryService;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.*;
 import java.math.BigDecimal;
+import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.database.sqlite.*;
 import android.database.SQLException;
 import android.database.Cursor;
+import android.os.Environment;
+import android.util.Log;
 
 import org.geometerplus.zlibrary.core.options.Config;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -47,6 +55,8 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	SQLiteBooksDatabase(Context context) {
 		myDatabase = context.openOrCreateDatabase("books.db", Context.MODE_PRIVATE, null);
 		migrate();
+		//exportBookmarks("FBReader.bookmarks");
+		importBookmarks("FBReader.bookmarks");
 	}
 
 	@Override
@@ -907,9 +917,9 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	}
 
 	@Override
-	protected long saveBookmark(Bookmark bookmark) {
+	protected long saveBookmark(Bookmark bookmark, boolean insert) {
 		SQLiteStatement statement;
-		if (bookmark.getId() == -1) {
+		if (bookmark.getId() == -1 || insert) {
 			statement = get(
 				"INSERT OR IGNORE INTO Bookmarks (book_id,bookmark_text,creation_time,modification_time,access_time,access_counter,model_id,paragraph,word,char,end_paragraph,end_word,end_character,visible,style_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 			);
@@ -942,7 +952,7 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 		statement.bindLong(14, bookmark.IsVisible ? 1 : 0);
 		statement.bindLong(15, bookmark.getStyleId());
 
-		if (bookmark.getId() == -1) {
+		if (bookmark.getId() == -1 || insert) {
 			return statement.executeInsert();
 		} else {
 			final long id = bookmark.getId();
@@ -957,6 +967,49 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 		final SQLiteStatement statement = get("DELETE FROM Bookmarks WHERE bookmark_id=?");
 		statement.bindLong(1, bookmark.getId());
 		statement.execute();
+	}
+
+	@Override
+	protected boolean exportBookmarks(String dir) {
+		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
+		try {
+			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(sdDir));
+			StringBuilder sb = new StringBuilder();
+			for (BookmarkQuery query = new BookmarkQuery(20); ; query = query.next()) {
+				final List<Bookmark> bookmarks = loadBookmarks(query);
+				if (bookmarks.isEmpty()) {
+					break;
+				}
+				for(String bm : SerializerUtil.serializeBookmarkList(bookmarks)) {
+					sb.append(bm + "\n\n");
+				}
+			}
+			oos.writeObject(sb.toString());
+			oos.close();
+			return true;
+		} catch (Exception e) {
+		}
+		return false;
+	}
+
+	@Override
+	protected boolean importBookmarks(String dir) {
+		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
+		try {
+			ObjectInputStream oos = new ObjectInputStream(new FileInputStream(sdDir));
+			String serialized = (String) oos.readObject();
+			String token = "<?xml version='1.1' encoding='UTF-8'?>";
+			List<String> serializedList = Arrays.asList(serialized.split(Pattern.quote(token)));
+			for(String xml : serializedList) {
+				if(xml.length() <= 10)
+					continue;
+				saveBookmark(SerializerUtil.deserializeBookmark(token + xml), true);
+			}
+			oos.close();
+			return true;
+		} catch (Exception e) {
+		}
+		return false;
 	}
 
 	protected ZLTextFixedPosition.WithTimestamp getStoredPosition(long bookId) {

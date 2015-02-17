@@ -718,7 +718,7 @@ public class BookCollection extends AbstractBookCollection {
 
 	public void saveBookmark(Bookmark bookmark) {
 		if (bookmark != null) {
-			bookmark.setId(myDatabase.saveBookmark(bookmark));
+			bookmark.setId(myDatabase.saveBookmark(bookmark, false));
 			if (bookmark.IsVisible) {
 				final Book book = getBookById(bookmark.getBookId());
 				if (book != null) {
