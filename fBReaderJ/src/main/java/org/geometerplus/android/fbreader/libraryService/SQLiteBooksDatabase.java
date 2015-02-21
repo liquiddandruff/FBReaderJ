@@ -57,7 +57,7 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 		myDatabase = context.openOrCreateDatabase("books.db", Context.MODE_PRIVATE, null);
 		migrate();
 		//exportBookmarks("FBReader.bookmarks.xml");
-		importBookmarks("FBReader.bookmarks.xml");
+		//importBookmarks("FBReader.bookmarks.xml");
 	}
 
 	@Override
@@ -971,12 +971,12 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	}
 
 	@Override
-	protected boolean exportBookmarks(String dir) {
+	protected boolean exportBookmarks(String dir, BookmarkQuery query) {
 		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
 		try {
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir),"utf-8"));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir), "UTF-8"));
 			StringBuilder sb = new StringBuilder();
-			for (BookmarkQuery query = new BookmarkQuery(20); ; query = query.next()) {
+			for (;; query = query.next()) {
 				final List<Bookmark> bookmarks = loadBookmarks(query);
 				if (bookmarks.isEmpty()) {
 					break;
@@ -997,16 +997,17 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	protected boolean importBookmarks(String dir) {
 		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir),"utf-8"));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir), "UTF-8"));
 			StringBuilder sb = new StringBuilder();
 			String line;
 			while((line = reader.readLine()) != null) {
 				sb.append(line);
 			}
 			String token = "<?xml version='1.1' encoding='UTF-8'?>";
-			List<String> serializedList = Arrays.asList(sb.toString().split(Pattern.quote(token)));
+			String[] serializedList = sb.toString().split(Pattern.quote(token));
 			for(String xml : serializedList) {
 				if(xml.length() <= 10) continue;
+				// returns -1 on failure
 				saveBookmark(SerializerUtil.deserializeBookmark(token + xml), true);
 			}
 			reader.close();

@@ -361,8 +361,30 @@ public class BookmarksActivity extends TabActivity implements MenuItem.OnMenuIte
 				bookTitleView.setVisibility(View.GONE);
 				exportView.setText("Export");
 				exportView.setVisibility(View.VISIBLE);
+				exportView.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						String out =  "FBReader." + myBook.getTitle() + ".xml";
+						if(myCollection.exportBookmarks(out, new BookmarkQuery(myBook, 20)))
+							Toast.makeText(getBaseContext(), "Bookmarks of current book exported to " + out, Toast.LENGTH_LONG).show();
+						else
+							Toast.makeText(getBaseContext(), "Failed to export bookmarks to " + out, Toast.LENGTH_LONG).show();
+						return;
+					}
+				});
 				importView.setText("Import");
 				importView.setVisibility(View.VISIBLE);
+				importView.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						String in =  "FBReader." + myBook.getTitle() + ".xml";
+						if(myCollection.importBookmarks(in))
+							Toast.makeText(getBaseContext(), "Bookmarks of current book imported from " + in, Toast.LENGTH_LONG).show();
+						else
+							Toast.makeText(getBaseContext(), "Failed to import bookmarks from " + in, Toast.LENGTH_LONG).show();
+						return;
+					}
+				});
 			} else {
 				exportView.setVisibility(View.GONE);
 				importView.setVisibility(View.GONE);
@@ -407,15 +429,6 @@ public class BookmarksActivity extends TabActivity implements MenuItem.OnMenuIte
 		}
 
 		public final void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			// use listener
-			if (view.findViewById(R.id.bookmark_export).getVisibility() == View.VISIBLE) {
-				String out =  "FBReader." + myBook.getTitle() + ".xml";
-				if(myCollection.exportBookmarks(out, new BookmarkQuery(myBook, 20)))
-					Toast.makeText(getBaseContext(), "Bookmarks of current book exported to " + out, Toast.LENGTH_LONG).show();
-				else
-					Toast.makeText(getBaseContext(), "Failed to export bookmarks", Toast.LENGTH_LONG).show();
-				return;
-			}
 			final Bookmark bookmark = getItem(position);
 			if (bookmark != null) {
 				gotoBookmark(bookmark);
