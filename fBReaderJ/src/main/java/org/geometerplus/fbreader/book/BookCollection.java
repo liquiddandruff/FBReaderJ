@@ -20,6 +20,7 @@
 package org.geometerplus.fbreader.book;
 
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -754,45 +755,94 @@ public class BookCollection extends AbstractBookCollection {
 	public boolean exportBookmarks(String dir, BookmarkQuery query) {
 		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
 		try {
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir), "UTF-8"));
-			StringBuilder xmlBuilder = new StringBuilder();
+			final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir), "UTF-8"));
+			final StringBuilder hashBuilder = new StringBuilder();
+			final StringBuilder xmlBuilder = new StringBuilder();
+			int numFailedExports = 0;
+			int numSuccessfulExports = 0;
 			for (;; query = query.next()) {
 				final List<Bookmark> bookmarks = bookmarks(query);
 				if (bookmarks.isEmpty()) {
 					break;
 				}
-				for(String bm : SerializerUtil.serializeBookmarkList(bookmarks)) {
-					xmlBuilder.append(bm + "\n\n");
+				for(Bookmark bm : bookmarks) {
+					final Book book = getBookById(bm.getBookId());
+					final String bookHash = getHash(book, true);
+					if(bookHash == null) {
+						numFailedExports++;
+						continue;
+					}
+					numSuccessfulExports++;
+					hashBuilder.append(bookHash + ",");
+					xmlBuilder.append(SerializerUtil.serialize(bm) + "\n\n");
 				}
 			}
-			writer.write(xmlBuilder.toString());
+			writer.write(
+					"# Lines beginning with # are ignored\n" +
+					"# Successfully exported " + Integer.toString(numSuccessfulExports) + " bookmarks\n" +
+					"# Failed to export " + Integer.toString(numFailedExports) + " bookmarks\n" +
+					// should split hashes
+					"HASHES:" + hashBuilder.toString() + "\n" +
+					xmlBuilder.toString()
+			);
 			writer.close();
 			return true;
 		} catch (Exception e) {
 		}
+		// TODO: return # bookmarks failed to export
 		return false;
 	}
 
 	public boolean importBookmarks(String dir) {
 		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir), "UTF-8"));
-			StringBuilder sb = new StringBuilder();
+			final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir), "UTF-8"));
+			final StringBuilder sb = new StringBuilder();
+			int numFailedImports = 0;
+			int numSuccessfulImports = 0;
+			String[] bookHashes = null;
 			String line;
 			while((line = reader.readLine()) != null) {
-				sb.append(line);
+				if(line.startsWith("#")) {
+					continue;
+				} else if(line.startsWith("HASHES:")) {
+					bookHashes = line.substring("HASHES:".length()).split(Pattern.quote(","));
+				} else {
+					sb.append(line);
+				}
 			}
-			String token = "<?xml version='1.1' encoding='UTF-8'?>";
-			String[] serializedList = sb.toString().split(Pattern.quote(token));
-			for(String xml : serializedList) {
-				if(xml.length() <= 10) continue;
-				// returns -1 on failure
-				myDatabase.saveBookmark(SerializerUtil.deserializeBookmark(token + xml), true);
+
+			final String token = "<?xml version='1.1' encoding='UTF-8'?>";
+			final String[] serializedBookmarks = new String[bookHashes.length];
+			int currentIndex = 0;
+			// Prune anything that's too small to be an actual bookmark (new lines, etc)
+			for(String serializedBookmark : sb.toString().split(Pattern.quote(token))) {
+				if(serializedBookmark.length() <= 10 || currentIndex > bookHashes.length) continue;
+				serializedBookmarks[currentIndex++] = serializedBookmark;
 			}
+
+			// Abort if mismatch (or continue and do as much as we can?)
+			if(bookHashes.length != currentIndex) return false;
+			for(int i = 0; i < bookHashes.length; i++) {
+				final String currHash = bookHashes[i];
+				final Bookmark currBookmark = SerializerUtil.deserializeBookmark(token + serializedBookmarks[i]);
+				final Book currBook = getBookById(currBookmark.getBookId());
+				if(currBook != null && currHash.equals(getHash(currBook, true))) {
+					if(myDatabase.saveBookmark(currBookmark, true) != -1) {
+						numSuccessfulImports++;
+						continue;
+					}
+				}
+				numFailedImports++;
+			}
+
+			Log.d("4242", "numSuccessfulImports: " + numSuccessfulImports + "  numFailedImports: " + numFailedImports);
+
 			reader.close();
 			return true;
 		} catch (Exception e) {
 		}
+		// TODO: return # bookmarks failed to import
 		return false;
 	}
 
