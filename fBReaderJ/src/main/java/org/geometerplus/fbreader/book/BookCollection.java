@@ -19,8 +19,17 @@
 
 package org.geometerplus.fbreader.book;
 
+import android.os.Environment;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import org.geometerplus.zlibrary.core.filesystem.*;
 import org.geometerplus.zlibrary.core.image.ZLImage;
@@ -743,11 +752,48 @@ public class BookCollection extends AbstractBookCollection {
 	}
 
 	public boolean exportBookmarks(String dir, BookmarkQuery query) {
-		return myDatabase.exportBookmarks(dir, query);
+		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
+		try {
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir), "UTF-8"));
+			StringBuilder xmlBuilder = new StringBuilder();
+			for (;; query = query.next()) {
+				final List<Bookmark> bookmarks = bookmarks(query);
+				if (bookmarks.isEmpty()) {
+					break;
+				}
+				for(String bm : SerializerUtil.serializeBookmarkList(bookmarks)) {
+					xmlBuilder.append(bm + "\n\n");
+				}
+			}
+			writer.write(xmlBuilder.toString());
+			writer.close();
+			return true;
+		} catch (Exception e) {
+		}
+		return false;
 	}
 
 	public boolean importBookmarks(String dir) {
-		return myDatabase.importBookmarks(dir);
+		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
+		try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir), "UTF-8"));
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while((line = reader.readLine()) != null) {
+				sb.append(line);
+			}
+			String token = "<?xml version='1.1' encoding='UTF-8'?>";
+			String[] serializedList = sb.toString().split(Pattern.quote(token));
+			for(String xml : serializedList) {
+				if(xml.length() <= 10) continue;
+				// returns -1 on failure
+				myDatabase.saveBookmark(SerializerUtil.deserializeBookmark(token + xml), true);
+			}
+			reader.close();
+			return true;
+		} catch (Exception e) {
+		}
+		return false;
 	}
 
 	public ZLTextFixedPosition.WithTimestamp getStoredPosition(long bookId) {

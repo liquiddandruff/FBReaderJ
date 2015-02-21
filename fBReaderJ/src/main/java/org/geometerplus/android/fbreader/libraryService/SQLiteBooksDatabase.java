@@ -19,22 +19,13 @@
 
 package org.geometerplus.android.fbreader.libraryService;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.*;
 import java.math.BigDecimal;
-import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.database.sqlite.*;
 import android.database.SQLException;
 import android.database.Cursor;
-import android.os.Environment;
 
 import org.geometerplus.zlibrary.core.options.Config;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -56,8 +47,6 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	SQLiteBooksDatabase(Context context) {
 		myDatabase = context.openOrCreateDatabase("books.db", Context.MODE_PRIVATE, null);
 		migrate();
-		//exportBookmarks("FBReader.bookmarks.xml");
-		//importBookmarks("FBReader.bookmarks.xml");
 	}
 
 	@Override
@@ -968,53 +957,6 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 		final SQLiteStatement statement = get("DELETE FROM Bookmarks WHERE bookmark_id=?");
 		statement.bindLong(1, bookmark.getId());
 		statement.execute();
-	}
-
-	@Override
-	protected boolean exportBookmarks(String dir, BookmarkQuery query) {
-		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
-		try {
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(sdDir), "UTF-8"));
-			StringBuilder sb = new StringBuilder();
-			for (;; query = query.next()) {
-				final List<Bookmark> bookmarks = loadBookmarks(query);
-				if (bookmarks.isEmpty()) {
-					break;
-				}
-				for(String bm : SerializerUtil.serializeBookmarkList(bookmarks)) {
-					sb.append(bm + "\n\n");
-				}
-			}
-			writer.write(sb.toString());
-			writer.close();
-			return true;
-		} catch (Exception e) {
-		}
-		return false;
-	}
-
-	@Override
-	protected boolean importBookmarks(String dir) {
-		File sdDir = new File(Environment.getExternalStorageDirectory(), dir);
-		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sdDir), "UTF-8"));
-			StringBuilder sb = new StringBuilder();
-			String line;
-			while((line = reader.readLine()) != null) {
-				sb.append(line);
-			}
-			String token = "<?xml version='1.1' encoding='UTF-8'?>";
-			String[] serializedList = sb.toString().split(Pattern.quote(token));
-			for(String xml : serializedList) {
-				if(xml.length() <= 10) continue;
-				// returns -1 on failure
-				saveBookmark(SerializerUtil.deserializeBookmark(token + xml), true);
-			}
-			reader.close();
-			return true;
-		} catch (Exception e) {
-		}
-		return false;
 	}
 
 	protected ZLTextFixedPosition.WithTimestamp getStoredPosition(long bookId) {

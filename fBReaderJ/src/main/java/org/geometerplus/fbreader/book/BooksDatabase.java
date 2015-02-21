@@ -124,8 +124,6 @@ public abstract class BooksDatabase {
 	protected abstract List<Bookmark> loadBookmarks(BookmarkQuery query);
 	protected abstract long saveBookmark(Bookmark bookmark, boolean insert);
 	protected abstract void deleteBookmark(Bookmark bookmark);
-	protected abstract boolean exportBookmarks(String dir, BookmarkQuery query);
-	protected abstract boolean importBookmarks(String dir);
 
 	protected HighlightingStyle createStyle(int id, String name, int bgColor, int fgColor) {
 		return new HighlightingStyle(
